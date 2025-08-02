@@ -1,7 +1,7 @@
-# Psych_790_Final
-DSHB Psych 790 Final
+# Psych_755_Final
+DSHB Psych 755 Final
 
-This is our final project for the class Psych 790 for the Data Science in Human Behavior (DSHB) program. We are using the 2022 edition of the Behavioral Risk Factor Surveillance System (BRFSS) dataset. Our outcome variable is covidsmp, consisting of responses to the question: "Did you have any symptoms lasting 3 months or longer that you did not have prior to having coronavirus or COVID-19?" We will be using machine learning techniques to create a predictive algorithm using the other variables in the dataset, and we will use a train-test split to quantify this algorithm's performance.
+This is our final project for the class Psych 755 for the Data Science in Human Behavior (DSHB) program. We are using the 2022 edition of the Behavioral Risk Factor Surveillance System (BRFSS) dataset. Our outcome variable is covidsmp, consisting of responses to the question: "Did you have any symptoms lasting 3 months or longer that you did not have prior to having coronavirus or COVID-19?" We will be using machine learning techniques to create a predictive algorithm using the other variables in the dataset, and we will use a train-test split to quantify this algorithm's performance.
 
 Currently, we plan to deliver 3 files:
 
