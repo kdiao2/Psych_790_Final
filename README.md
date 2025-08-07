@@ -1,12 +1,23 @@
-# Psych_755_Final
-DSHB Psych 755 Final
+# Psych 755: Final Project
+## Authors: Huda Ahmed, Kenneth Diao, Sadaf Nasir
 
-This is our final project for the class Psych 755 for the Data Science in Human Behavior (DSHB) program. We are using the 2022 edition of the Behavioral Risk Factor Surveillance System (BRFSS) dataset. Our outcome variable is covidsmp, consisting of responses to the question: "Did you have any symptoms lasting 3 months or longer that you did not have prior to having coronavirus or COVID-19?" We will be using machine learning techniques to create a predictive algorithm using the other variables in the dataset, and we will use a train-test split to quantify this algorithm's performance.
+# Description
 
-Currently, we plan to deliver 3 files:
+This is our final project for the class Psych 755 for the Data Science in Human Behavior (DSHB) program at the University of Wisconsin - Madison. We are using the 2022 edition of the Behavioral Risk Factor Surveillance System (BRFSS) dataset. Our outcome variable is `prolonged_covid_symptoms` (`covidsmp`), consisting of a binary response to the question: "Did you have any symptoms lasting 3 months or longer that you did not have prior to having coronavirus or COVID-19?" (1 = yes, 0 = no).
 
-Exploratory Data Analysis (EDA) in R/Quarto: this file will contain an initial cleaning and exploration of data in R.
+# Goals
 
-Random Forest and Feature Importance Analysis in Python: this file will contain a Random Forest and Feature Importance Analysis whereby the predictor variables for our algorithm will be identified.
+The goal of this project is to apply machine learning methods (random forest & logistic regression) to predict the occurrence of long COVID symptoms in populations with chronic health conditions.
 
-Logistic Regression in R/Quarto: this file will contain a Logistic Regression which takes as input the predictor variables determined in the Random Forest/Feature Analysis.
+# Deliverables
+1. Cleaning and Exploratory Data Analysis (EDA) in R/Quarto: this file will contain an initial cleaning and exploration of data in R.
+2. Random Forest and Feature Importance Analysis in Python: this file will contain a Random Forest and Feature Importance Analysis whereby the predictor variables for our algorithm will be identified.
+3. Logistic Regression in R/Quarto: this file will contain a Logistic Regression using a leave-one-out method to assess the importance of each predictor to the overall machine learning algorithm.
+
+# Table of Contents
+1. [README]
+2. [Data Files]
+3. [Codebooks]
+4. [Data Cleaning & EDA]
+5. [Random Forest ML]
+6. [Logistic Regresison ML]
