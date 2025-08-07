@@ -1,5 +1,5 @@
 # Psych 755: Final Project
-## Authors: Huda Ahmed, Kenneth Diao, Sadaf Nasir
+**Authors: Huda Ahmed, Kenneth Diao, Sadaf Nasir**
 
 # Description
 
@@ -15,9 +15,9 @@ The goal of this project is to apply machine learning methods (random forest & l
 3. Logistic Regression in R/Quarto: this file will contain a Logistic Regression using a leave-one-out method to assess the importance of each predictor to the overall machine learning algorithm.
 
 # Table of Contents
-1. [README]
-2. [Data Files]
-3. [Codebooks]
-4. [Data Cleaning & EDA]
+1. [README](https://github.com/kdiao2/Psych_755_Final/blob/0945650f6ec4aa59687b9fe4689c542a7aafea6a/README.md)
+2. [Data Files](https://github.com/kdiao2/Psych_755_Final/tree/0945650f6ec4aa59687b9fe4689c542a7aafea6a/data)
+3. [Codebooks](https://github.com/kdiao2/Psych_755_Final/tree/0945650f6ec4aa59687b9fe4689c542a7aafea6a/codebooks)
+4. [Data Cleaning & EDA](https://github.com/kdiao2/Psych_755_Final/tree/0945650f6ec4aa59687b9fe4689c542a7aafea6a/cleaning_and_eda)
 5. [Random Forest ML]
 6. [Logistic Regresison ML]
