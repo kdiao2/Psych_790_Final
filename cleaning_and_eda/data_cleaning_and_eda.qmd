@@ -1,0 +1,285 @@
+---
+title: "Psych 790 DSHB Final Project"
+author: "Huda Ahmed, Kenneth Diao, Sadaf Nasir"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+# Setting Up Our Environment
+
+```{r}
+# Handle conflicts
+options(conflicts.policy = "depends.ok")
+devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/fun_ml.R?raw=true")
+tidymodels_conflictRules()
+conflictRules("Matrix", mask.ok = c("expand", "pack", "unpack"))
+
+# Set global options
+knitr::opts_chunk$set(echo = TRUE)
+
+# Load packages
+library(tidyverse)
+library(tidymodels)
+library(readr)
+library(cowplot, include.only = "plot_grid")
+
+# Source functions
+devtools::source_url(
+  "https://github.com/jjcurtin/lab_support/blob/main/fun_eda.R?raw=true")
+devtools::source_url(
+  "https://github.com/jjcurtin/lab_support/blob/main/fun_plots.R?raw=true")
+
+# Set theme
+theme_set(theme_classic()) 
+
+# Path for data
+path_data <- "data"
+```
+
+```{r}
+# Read in data, "tidy" variable names as snake-case
+data_all <- read_csv(here::here(path_data, "data_all.csv")) |>
+  janitor::clean_names("snake")
+```
+
+# Introduction
+
+The COVID-19 global pandemic began in 2020. The long-lasting impacts of this pandemic is an evolving phenomenon that is continued to be studied. One major observation that has been made is that individuals with chronic health conditions (heart disease, diabetes, cancer, etc.), are disproportionately affected by COVID-19, and may also be more likely to experience symptoms of long COVID (Hacker, et al., 2021). Additionally, research suggests that COVID-19 may be resulting in the development of new chronic health conditions (Hacker, et al., 2021). Considering the damage caused by COVID-19, public health experts may be interested in a machine learning model that predicts the likelihood of long COVID in populations with chronic health conditions. This model has the potential to inform disease prevention in high-risk populations in an effort to improve health outcomes on a national level.
+
+# Data
+
+The Behavioral Risk Factor Surveillance System (BRFSS) is a cross-sectional telephone survey conducted nationally every year (CDC, 2024). This survey is designed to collect prevalance data among adult U.S. residents regarding health-related risk behaviors, chronic health conditions, health-care access, and use of preventative services. For this project, BRFSS data will be used from 2022, which contains 445,132 responses nationally.
+
+# Data Cleaning
+
+The code chunk below contains the function used to prepare the dataset for our Random Forest model.
+
+First, we selected a subset of predictors relevant to our algorithm. These included most, if not all, of the variables in the following sections of the BRFSS 2022 dataset: demographics (core section 8), chronic health conditions (core section 7), long-term COVID effects (emerging core) and COVID Vaccination (module 7). Please refer to the `codebooks` branch in our GitHub repository (`Psych_755_Final`) for a more detailed breakdown of the variables included in our analysis, as well as their corresponding levels.
+
+## Variables Dropped
+
+The variables that were deliberately not included in the aforementioned sections include:
+
+**Demographics**
+
+-   `asthnow`: A follow up question to `asthma3` or `asthma`, asking the participant if, at the time of survey completion, they still have asthma. We chose to remove this since it seemed redundant, and we were only focused on which chronic health condition participants had, instead of the time at which they had those conditions.
+-   `numhhol4`: This variable asked participants if they had more than one landline telephone number in their household. We felt that this was irrelevant to the analysis, and not a typical informative demographic variable.
+-   `weight2`: This variable asked participants to enter their weight in as a continuous variable, some participants did so in imperial units and others in metrics, this made it difficult to recode every single response, so we chose to drop the variable to reduce errors in cleaning.
+-   `height3`: This variable asked participants to enter their height in as a continuous variable, some participants did so in imperial units and others in metrics, this made it difficult to recode every single response, so we chose to drop the variable to reduce errors in cleaning.
+
+**Long-term COVID Effects & COVID Vaccination**
+
+-   `covidfs1`: This variable asked the participant what month and year they received their first COVID vaccination. We dropped this variable from the algorithm because re-coding the month and year would have taken too much time, moreover, the temporal information is not important to our analysis.
+-   `covidse1`: This variable asked the participant what month and year they received their second COVID vaccination. We dropped this variable from the algorithm because re-coding the month and year would have taken too much time, moreover, the temporal information is not important to our analysis.
+-   `covacget`: This variable measured the willingness of participants to get the COVID vaccine (if they hadn't already received one), and for some reason, was completely missing from the full dataset, so it wasn't included in our algorithm.
+-   `covidint`: This variable measured the intention of participants to continue being inoculated against COVID-19 as time goes by, and for some reason, was completely missing from the full dataset, so it wasn't included in our algorithm.
+
+## Variables Changed
+
+In terms of the changes applied to the existing variables, I used the cleaning function to re-code and re-class all the variables as binaries so that the data would be ready for the Random Forest algorithm. A good majority of the variables selected for this algorithm were easy to transform into binary variables (levels included `1` = yes, `2` = no, `7` = don't know/not sure, `9` = refused) so I just had to drop `7s` and `9s` and then re-code `2s` to `0` so that `1` = yes and `0` = no. There were few cases where `77` and `99` were used instead of `7` and `9`, but the same logic applies to how these levels were dealt with.
+
+In terms of multi-level categorical variables, new binary variables were created to simplify how data was read in to the Random Forest model. For example, for variables like `education` (`educa`) that had multiple levels (where 1 = Never attended school or only kindergarten, 2 = Grades 1 through 8 (Elementary), 3 = Grades 9 through 11 (Some high school),4 = Grade 12 or GED (High school graduate), 5 = College 1 year to 3 years (Some college or technical school), 6 = College 4 years or more (College graduate), and 9 = refused), a new variable was created called `college_or_more` (where 1 = some college or more (codes 5–6), and 0 = high school or less). This style of re-coding was also applied to the following variables:
+
+-   `diabetes` (`diabete4`): where 1 = diabetic and 0 = all other levels, for the new variable `diabetic`
+-   `household_income` (`income3`): where 1 = earns over 50k dollars and 0 = earns under 50k dollars, for the new variable `income_over_50k`
+-   `employment_status` (`employ1`): where 1 = employed/self-employed and 0 = all other categories, for the new variable `currently_employed`
+-   `marial_status` (`marital`): where 1 = married and 0 = other for the new variable `is_married`
+-   `home_ownership` (`renthom1`): where 1 = owns home and 0 = renting and other living arrangements, for the new variable `owns_home`
+-   `covid_positive` (`covidpos`): where 1 = has tested positive and 0 = has not tested positive, for the new variable `covid_pos`
+-   `primary_covid_symptom` (`covidprm`): where 1 = had limiting COVID symptoms and 0 = did not have limiting COVID symptoms, for the new variable `had_limiting_covid_symptoms`
+-   `covid_vacc_count` (`covidnu1`): where 1 = received 2 or more vaccine doses and 0 = received less than 2 doses or received no doses, for the new variable `two_or_more_vaccs`
+
+Finally, our outcome variable `prolonged_covid_symptoms` (`covidsmp`) was filtered so that any participants with NA values for that variable were removed from the dataset, and all participants who answered 7 = don't know/not sure or 9 = refused were all removed from the dataset.
+
+## Function For Cleaning
+
+```{r}
+clean_covid_data <- function(data_all) {
+  
+  data_cleaned <- data_all |>
+    # Select variables of interest
+    select(cvdinfr4, cvdcrhd4, cvdstrk3, asthma3, chcscnc1, chcocnc1, chccopd3,
+           addepev3, chckdny2, havarth4, diabete4, marital, educa, renthom1,
+           veteran3, employ1, children, income3, pregnant, deaf, covidpos,
+           covidprm, covidva1, covidnu1, covidsmp) |>
+    
+    # Rename for clarity
+    rename(
+      heart_attack = cvdinfr4,
+      coronary_heart_disease = cvdcrhd4, 
+      stroke = cvdstrk3, 
+      asthma = asthma3, 
+      skin_cancer = chcscnc1,
+      melanoma_or_other = chcocnc1,
+      copd = chccopd3,
+      depression = addepev3,
+      kidney_disease = chckdny2,
+      arthiritis = havarth4,
+      diabetes = diabete4,
+      marital_status = marital,
+      education = educa,
+      home_ownership = renthom1,
+      veteran_status = veteran3,
+      employment_status = employ1,
+      children = children,
+      household_income = income3,
+      pregnant = pregnant,
+      deaf = deaf,
+      covid_positive = covidpos,
+      primary_covid_symptom = covidprm,
+      covid_vacc_status = covidva1,
+      covid_vacc_count = covidnu1,
+      prolonged_covid_symptoms = covidsmp 
+    ) |>
+    
+    # Remove ambiguous codes (7/9/77/99)
+    filter(if_all(
+      .cols = c(heart_attack, coronary_heart_disease, stroke, asthma,
+                skin_cancer, melanoma_or_other, copd, depression,
+                kidney_disease, arthiritis, veteran_status,
+                pregnant, deaf, covid_vacc_status, prolonged_covid_symptoms),
+      .fns = ~ !.x %in% c(7, 9)
+    )) |>
+    filter(!diabetes %in% c(7, 9)) |>
+    filter(!education %in% c(9)) |>
+    filter(!home_ownership %in% c(7, 9)) |>
+    filter(!household_income %in% c(77, 99)) |>
+    filter(!employment_status %in% c(9)) |>
+    filter(!marital_status %in% c(9)) |>
+    filter(!children %in% c(99)) |>
+    filter(!covid_positive %in% c(7, 9)) |>
+    filter(!primary_covid_symptom %in% c(77, 99)) |>
+    filter(!covid_vacc_count %in% c(7, 9)) |>
+
+    # Recode binary variables (1 = yes, 0 = no)
+    mutate(across(c(heart_attack, coronary_heart_disease, stroke, asthma,
+                    skin_cancer, melanoma_or_other, copd, depression,
+                    kidney_disease, arthiritis, veteran_status, pregnant,
+                    deaf, covid_vacc_status, prolonged_covid_symptoms),
+                  ~ ifelse(.x == 1, 1, 0))) |>
+    
+    # Diabetes: 1 = diabetic, 0 = all others
+    mutate(diabetic = ifelse(diabetes == 1, 1, 0)) |>
+
+    # Education: 1 = some college or more (codes 5–6), 0 = high school or less
+    mutate(college_or_more = ifelse(education >= 5, 1, 0)) |>
+    
+    # Household income: 1 = ≥ $50k (codes 6–11), 0 = under $50k
+    mutate(income_over_50k = ifelse(household_income >= 6, 1, 0)) |>
+    
+    # Employment: 1 = employed/self-employed (codes 1–2), 0 = other
+    mutate(currently_employed = ifelse(employment_status %in% c(1, 2), 1, 0)) |>
+    
+    # Marital status: 1 = married (code 1), 0 = other
+    mutate(is_married = ifelse(marital_status == 1, 1, 0)) |>
+    
+    # Children: convert 88 (none) to 0
+    mutate(children = ifelse(children == 88, 0, children)) |>
+    
+    # Home ownership: 1 = own, 0 = other (including rent & other arrangements)
+    mutate(owns_home = ifelse(home_ownership == 1, 1, 0)) |>
+
+    # COVID positive: 1 = yes (code 1 or 3), 0 = no
+    mutate(covid_pos = ifelse(covid_positive %in% c(1, 3), 1, 0)) |>
+
+    # Limiting COVID symptoms: 1 = had symptoms, 0 = did not
+    mutate(had_limiting_covid_symptoms = 
+             ifelse(primary_covid_symptom == 9, 0, 1)) |>
+
+    # Vaccinated: 1 = received ≥ 2 doses, 0 = did not
+    mutate(two_or_more_vaccs = ifelse(covid_vacc_count >= 2, 1, 0)) |>
+
+    # Drop original variables no longer needed
+    select(-c(diabetes, education, home_ownership, household_income, 
+              employment_status, marital_status, covid_positive, 
+              primary_covid_symptom, covid_vacc_count)) |>
+    
+    # Drop observations with NA in outcome variable
+    filter(!is.na(prolonged_covid_symptoms))
+
+  return(data_cleaned)
+}
+```
+
+# Applying The Cleaning Function
+
+Here, we apply the cleaning function to the dataset, then check to make sure it worked by 'glimpsing' the dataset.
+
+```{r}
+data_cleaned <- clean_covid_data(data_all) |>
+  glimpse()
+```
+
+# Creating New Data Files
+
+Then, we create a new CSV file containing the new cleaned and filtered dataset.
+
+```{r}
+write_csv(data_cleaned, "data_cleaned.csv")
+```
+
+# Train-Test Split
+
+Finally, we split our data into a training set and a test set, then write those out as new CSV files so that our teammates can continue with their machine learning algorithms.
+
+```{r}
+set.seed(20110522)
+
+splits_test <- initial_split(data_cleaned, prop = 0.75, strata = "prolonged_covid_symptoms")
+  
+data_train <- training(splits_test)
+data_test <- testing(splits_test)
+```
+
+```{r}
+splits_test |>
+  analysis() |>
+  glimpse() |>
+  write_csv(here::here(path_data, "data_train.csv"))
+```
+
+```{r}
+splits_test |>
+  assessment() |>
+  glimpse() |>
+  write_csv(here::here(path_data, "data_test.csv"))
+```
+
+# Exploratory Data Analysis
+
+```{r}
+# Read in data, "tidy" variable names as snake-case
+data_train <- read_csv(here::here(path_data, "data_train.csv")) |>
+  janitor::clean_names("snake")
+```
+
+The training dataset contains 72,297 observations and 25 numeric variables, each corresponding to health, demographic, and COVID-19-related characteristics of participants.
+
+Most variables have no missing data, though a few, such as `pregnant`, `covid_vacc_status`, `had_limiting_covid_symptoms`, and `two_or_more_vaccs`, have substantial missingness, with complete rates ranging from 21.4% to 39.6%.
+
+Many of the binary health conditions, including `heart_attack` (mean = 0.045), `stroke` (mean = 0.033), and `kidney_disease` (mean = 0.041), occur at relatively low rates, while more prevalent conditions include `arthritis` (mean = 0.313) and `depression` (mean = 0.238).
+
+Educational attainment and household income skew high, with 74% of participants reporting some college or more and 77% reporting household incomes of \$50,000 or greater.
+
+The majority of participants were employed (66%), married (56%), and owned their homes (70%).
+
+COVID-19 exposure is nearly universal in this training set, with all individuals coded as having tested positive. However, only 21.4% reported prolonged COVID symptoms, and 93% had received at least two vaccine doses.
+
+```{r}
+skimr::skim(data_train)
+```
+
+Below are univariate distributions of each variable displaying the balances between classes as mentioned prior.
+
+```{r}
+# Univariate distributions
+data_train |>
+  names() |>
+  map(\(name) plot_bar(df = data_train, x = name))
+```
+
+# References
+
+Hacker KA, Briss PA, Richardson L, Wright J, Petersen R. COVID-19 and Chronic Disease: The Impact Now and in the Future. Prev Chronic Dis. 2021 Jun 17;18:E62. doi: 10.5888/pcd18.210086. PMID: 34138696; PMCID: PMC8220960.
