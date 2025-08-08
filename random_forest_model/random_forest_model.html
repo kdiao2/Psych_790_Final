@@ -1,0 +1,2779 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.40">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Kenneth Diao, Huda Ahmed, Sadaf Nasir">
+<meta name="dcterms.date" content="2025-08-05">
+
+<title>Random Forest Model to Predict Occurrence of Long-COVID Symptoms in Patients with Chronic Health Conditions</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="755_final_proj_rf_files/libs/clipboard/clipboard.min.js"></script>
+<script src="755_final_proj_rf_files/libs/quarto-html/quarto.js"></script>
+<script src="755_final_proj_rf_files/libs/quarto-html/popper.min.js"></script>
+<script src="755_final_proj_rf_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="755_final_proj_rf_files/libs/quarto-html/anchor.min.js"></script>
+<link href="755_final_proj_rf_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="755_final_proj_rf_files/libs/quarto-html/quarto-syntax-highlighting-549806ee2085284f45b00abea8c6df48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="755_final_proj_rf_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="755_final_proj_rf_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="755_final_proj_rf_files/libs/bootstrap/bootstrap-973236bd072d72a04ee9cd82dcc9cb29.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of Contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
+  <li><a href="#random-forest-model-containing-all-predictors" id="toc-random-forest-model-containing-all-predictors" class="nav-link" data-scroll-target="#random-forest-model-containing-all-predictors"><span class="header-section-number">2</span> Random Forest Model Containing all Predictors</a>
+  <ul class="collapse">
+  <li><a href="#feature-importance-for-rf" id="toc-feature-importance-for-rf" class="nav-link" data-scroll-target="#feature-importance-for-rf"><span class="header-section-number">2.1</span> Feature Importance for rf</a></li>
+  </ul></li>
+  <li><a href="#random-forest-model-excluding-primary_covid_symptom" id="toc-random-forest-model-excluding-primary_covid_symptom" class="nav-link" data-scroll-target="#random-forest-model-excluding-primary_covid_symptom"><span class="header-section-number">3</span> Random Forest Model Excluding ‘primary_covid_symptom’</a>
+  <ul class="collapse">
+  <li><a href="#feature-importance-for-rf_2" id="toc-feature-importance-for-rf_2" class="nav-link" data-scroll-target="#feature-importance-for-rf_2"><span class="header-section-number">3.1</span> Feature Importance for rf_2</a></li>
+  </ul></li>
+  <li><a href="#random-forest-model-excluding-primary_covid_symptom-demographic-variables" id="toc-random-forest-model-excluding-primary_covid_symptom-demographic-variables" class="nav-link" data-scroll-target="#random-forest-model-excluding-primary_covid_symptom-demographic-variables"><span class="header-section-number">4</span> Random Forest Model Excluding ‘primary_covid_symptom’ &amp; demographic variables</a>
+  <ul class="collapse">
+  <li><a href="#feature-importance-for-rf_3" id="toc-feature-importance-for-rf_3" class="nav-link" data-scroll-target="#feature-importance-for-rf_3"><span class="header-section-number">4.1</span> Feature Importance for rf_3</a></li>
+  </ul></li>
+  <li><a href="#test-predictions" id="toc-test-predictions" class="nav-link" data-scroll-target="#test-predictions"><span class="header-section-number">5</span> Test Predictions</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">6</span> Conclusion</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="755_final_proj_rf.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Random Forest Model to Predict Occurrence of Long-COVID Symptoms in Patients with Chronic Health Conditions</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Kenneth Diao, Huda Ahmed, Sadaf Nasir </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            UW-Madison - Data Science in Human Behavior
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">August 5, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
+<p>This Jupyter Notebook is a continuation of a series of notebooks in a project assessing the predictive role of chronic health conditions in the occurrence of long COVID symptoms. For ease in understanding the contents of this notebook, please first refer to the codebook folder and the ‘cleaning_and_eda’ notebook (located in the Psych_755_final GitHub repository).</p>
+<p>This notebook seeks to run the cleaned datset through a series of random forest models, and explore the differences in performance between the performances of said models. The dataset is read in, briefly explored, then run through a random forest model with all predictors. Following this, a feature importance is conducted &amp; a feature importance plot is created. This process is repeated with two more models. One removes the most important feature from the feature importance in the firest random forest model. The final random forest model also removes demographic variables, exploring exclusively the role of chronic health conditions in the occurrence of long COVID symptoms. The accuracies of the three models are compared and final predictions are made with a held-out test set. Test predictions can be found in the Psych_755_final GitHub repository.</p>
+<div id="77113c44-34c2-4fd3-ac3e-3e83b9d0b898" class="cell" data-execution_count="18">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># import necessary packages</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.ensemble <span class="im">import</span> RandomForestClassifier</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> StandardScaler, LabelEncoder</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score, classification_report, confusion_matrix</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> imblearn.over_sampling <span class="im">import</span> SMOTE</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>sns.set_context(<span class="st">'paper'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Above, we load in the necessary python libraries for this notebook. Below we read in the test dataset that has already been cleaned and had EDA performed. A sample is printed to confirm the dataset was read in properly. The dataset was cleaned so that all nominal variables would be collapsed into binary variables. Random forest models do not natively handle multi-class nominal variables, leading to this decisiion. All variables are confirmed to be binary.</p>
+<div id="88fdf00b-c2d3-4a3e-9f39-3ee88ff43593" class="cell" data-execution_count="7">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># read in data &amp; sample data</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="st">'data_train.csv'</span>, dtype<span class="op">=</span>{<span class="dv">21</span>: <span class="bu">str</span>})</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>df.sample(<span class="dv">3</span>).transpose()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">25804</th>
+<th data-quarto-table-cell-role="th">55019</th>
+<th data-quarto-table-cell-role="th">51697</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">heart_attack</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">coronary_heart_disease</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">stroke</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">asthma</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">skin_cancer</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">melanoma_or_other</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">copd</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">depression</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">kidney_disease</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">arthiritis</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">veteran_status</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">children</td>
+<td>0</td>
+<td>2</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">pregnant</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">deaf</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">covid_vacc_status</td>
+<td>NaN</td>
+<td>0.0</td>
+<td>NaN</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">prolonged_covid_symptoms</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">diabetic</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">college_or_more</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">income_over_50k</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">currently_employed</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">is_married</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">owns_home</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">covid_pos</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">had_limiting_covid_symptoms</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">two_or_more_vaccs</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Data types are checked to make sure all variables were read in as numeric.</p>
+<div id="8ac7d2ac-aedc-4880-a8b5-ff53595e7979" class="cell" data-execution_count="9">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># checking data types</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># everything is numeric</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>df.dtypes</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="9">
+<pre><code>heart_attack                     int64
+coronary_heart_disease           int64
+stroke                           int64
+asthma                           int64
+skin_cancer                      int64
+melanoma_or_other                int64
+copd                             int64
+depression                     float64
+kidney_disease                   int64
+arthiritis                       int64
+veteran_status                   int64
+children                         int64
+pregnant                       float64
+deaf                             int64
+covid_vacc_status              float64
+prolonged_covid_symptoms         int64
+diabetic                         int64
+college_or_more                  int64
+income_over_50k                float64
+currently_employed               int64
+is_married                       int64
+owns_home                       object
+covid_pos                        int64
+had_limiting_covid_symptoms    float64
+two_or_more_vaccs              float64
+dtype: object</code></pre>
+</div>
+</div>
+<p>Basic decriptive statistics are obtained of the training dataset. The column ‘children’ has a really high maximum value (23 children), which should bre explored. Most of the population seems to be free of chronic health conditions. This dataset contains only individuals who have tested positive for COVID-19, as the minimum and maximum are 1. 93% of the sample has received two ore more COVID-19 vaccinations and about 95% of the sample experienced limting COVID symptoms.</p>
+<div id="97f81359-cea6-4ef9-8dac-a7d52df4750d" class="cell" data-execution_count="14">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># basic descriptive statistics</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># confirm that all variables are binary</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>df.describe().transpose()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="14">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">count</th>
+<th data-quarto-table-cell-role="th">mean</th>
+<th data-quarto-table-cell-role="th">std</th>
+<th data-quarto-table-cell-role="th">min</th>
+<th data-quarto-table-cell-role="th">25%</th>
+<th data-quarto-table-cell-role="th">50%</th>
+<th data-quarto-table-cell-role="th">75%</th>
+<th data-quarto-table-cell-role="th">max</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">heart_attack</td>
+<td>72297.0</td>
+<td>0.044580</td>
+<td>0.206381</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">coronary_heart_disease</td>
+<td>72297.0</td>
+<td>0.051178</td>
+<td>0.220362</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">stroke</td>
+<td>72297.0</td>
+<td>0.033224</td>
+<td>0.179222</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">asthma</td>
+<td>72297.0</td>
+<td>0.172469</td>
+<td>0.377790</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">skin_cancer</td>
+<td>72297.0</td>
+<td>0.067776</td>
+<td>0.251363</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">melanoma_or_other</td>
+<td>72297.0</td>
+<td>0.093807</td>
+<td>0.291563</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">copd</td>
+<td>72297.0</td>
+<td>0.068495</td>
+<td>0.252596</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">depression</td>
+<td>72296.0</td>
+<td>0.237689</td>
+<td>0.425671</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">kidney_disease</td>
+<td>72297.0</td>
+<td>0.041302</td>
+<td>0.198989</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">arthiritis</td>
+<td>72297.0</td>
+<td>0.313111</td>
+<td>0.463762</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">veteran_status</td>
+<td>72297.0</td>
+<td>0.107473</td>
+<td>0.309716</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">children</td>
+<td>72297.0</td>
+<td>0.675270</td>
+<td>1.131422</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>23.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">pregnant</td>
+<td>18788.0</td>
+<td>0.030126</td>
+<td>0.170937</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">deaf</td>
+<td>72297.0</td>
+<td>0.071594</td>
+<td>0.257816</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">covid_vacc_status</td>
+<td>28603.0</td>
+<td>0.797014</td>
+<td>0.402229</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">prolonged_covid_symptoms</td>
+<td>72297.0</td>
+<td>0.214144</td>
+<td>0.410230</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">diabetic</td>
+<td>72297.0</td>
+<td>0.127211</td>
+<td>0.333212</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">college_or_more</td>
+<td>72297.0</td>
+<td>0.739892</td>
+<td>0.438696</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">income_over_50k</td>
+<td>72296.0</td>
+<td>0.773556</td>
+<td>0.418533</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">currently_employed</td>
+<td>72297.0</td>
+<td>0.654619</td>
+<td>0.475496</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">is_married</td>
+<td>72297.0</td>
+<td>0.561904</td>
+<td>0.496156</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">covid_pos</td>
+<td>72297.0</td>
+<td>1.000000</td>
+<td>0.000000</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">had_limiting_covid_symptoms</td>
+<td>15438.0</td>
+<td>0.948309</td>
+<td>0.221409</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">two_or_more_vaccs</td>
+<td>22785.0</td>
+<td>0.931402</td>
+<td>0.252774</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>Below we have explored the ‘children’ column, looking at the number of people who have more than 10 children. There are two clear outliers (21 &amp; 23 children). However, since the dataset is so large, this may not be serious cause for concern.</p>
+<div id="b2f511a1-2425-4013-bdfa-63fdd65c3bb1" class="cell" data-execution_count="24">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># number of people who have more than 10 children</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>df[df[<span class="st">'children'</span>] <span class="op">&gt;</span> <span class="dv">10</span>][<span class="st">'children'</span>].value_counts()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="24">
+<pre><code>children
+12    3
+11    2
+14    2
+21    1
+23    1
+17    1
+Name: count, dtype: int64</code></pre>
+</div>
+</div>
+<p>The shape of the dataset is checked, showing 72,297 observations of 25 variables.</p>
+<div id="3bfa896a-4935-4ed2-92e3-47460e417888" class="cell" data-execution_count="9">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># check number of observation &amp; number of features</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>df.shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="9">
+<pre><code>(72297, 25)</code></pre>
+</div>
+</div>
+<p>The outcome variable ‘prolonged_covid_symptoms’ is checked for missingness, since a random forest model is not capable of handling a dataset with missing values in the outcome variable. Luckily, this dataset has been cleaned and missing responses have been removed. This is confirmed below.</p>
+<div id="7e630b2f-dfcd-447a-9bf6-f237a78acd9d" class="cell" data-execution_count="1">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># check outcome for missingness</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(df[<span class="st">'prolonged_covid_symptoms'</span>].isna().<span class="bu">sum</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-error">
+<div class="ansi-escaped-output">
+<pre><span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[1], line 2</span>
+<span class="ansi-green-fg ansi-bold">      1</span> <span style="font-style:italic;color:rgb(95,135,135)"># check outcome for missingness</span>
+<span class="ansi-green-fg">----&gt; 2</span> <span style="color:rgb(0,135,0)">print</span>(df[<span style="color:rgb(175,0,0)">'</span><span style="color:rgb(175,0,0)">prolonged_covid_symptoms</span><span style="color:rgb(175,0,0)">'</span>]<span style="color:rgb(98,98,98)">.</span>isna()<span style="color:rgb(98,98,98)">.</span>sum())
+
+<span class="ansi-red-fg">NameError</span>: name 'df' is not defined</pre>
+</div>
+</div>
+</div>
+</section>
+<section id="random-forest-model-containing-all-predictors" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Random Forest Model Containing all Predictors</h1>
+<p>Below the first random forest model is set up using all features in the dataset. The ‘children’ column is scaled to improve performance. A train-test split is instatiated, the model is run and performance metrics are obtained.</p>
+<div id="f0066975-3370-409c-9a67-e2d95ede5ab7" class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># establish X and y</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> df.drop(columns<span class="op">=</span>[<span class="st">'prolonged_covid_symptoms'</span>])</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> df[<span class="st">'prolonged_covid_symptoms'</span>]</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co"># scale numeric column</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>scaler <span class="op">=</span> StandardScaler()</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="st">'children'</span> <span class="kw">in</span> X.columns:</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    X[<span class="st">'children'</span>] <span class="op">=</span> scaler.fit_transform(X[[<span class="st">'children'</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div id="91881e1f-0fec-4441-a685-daec57fecd79" class="cell" data-execution_count="22">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># train-test split</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>X_train, X_test, y_train, y_test <span class="op">=</span> train_test_split(</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    X, y, test_size<span class="op">=</span><span class="fl">0.33</span>, random_state<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co"># fit rf model</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>rf <span class="op">=</span> RandomForestClassifier(random_state<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>rf.fit(X_train, y_train)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Accuracy: 0.9994132193302318
+
+Classification Report:
+               precision    recall  f1-score   support
+
+           0       1.00      1.00      1.00     18795
+           1       1.00      1.00      1.00      5064
+
+    accuracy                           1.00     23859
+   macro avg       1.00      1.00      1.00     23859
+weighted avg       1.00      1.00      1.00     23859
+
+
+Confusion Matrix:
+ [[18793     2]
+ [   12  5052]]</code></pre>
+</div>
+</div>
+<div id="431e78b4-0eea-4a5b-ae76-daf480dc20b5" class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># run prediction</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>preds <span class="op">=</span> rf.predict(X_test)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># performance metrics</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Accuracy:"</span>, accuracy_score(y_test, preds))</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Classification Report:</span><span class="ch">\n</span><span class="st">"</span>, classification_report(y_test, preds))</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Confusion Matrix:</span><span class="ch">\n</span><span class="st">"</span>, confusion_matrix(y_test, preds))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>This model has an extremely high accuracy, which is very strange. Perhaps the feature importance will tell us more. Below we are checking the class balances of the outcome variable, y.</p>
+<div id="63dec00c-b09d-4db6-b4c6-e8021cd0056b" class="cell" data-execution_count="24">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># checking class balances in y</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(y.value_counts(normalize<span class="op">=</span><span class="va">True</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>prolonged_covid_symptoms
+0    0.785856
+1    0.214144
+Name: proportion, dtype: float64</code></pre>
+</div>
+</div>
+<section id="feature-importance-for-rf" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="feature-importance-for-rf"><span class="header-section-number">2.1</span> Feature Importance for rf</h2>
+<p>Feature importances are obtained, showing that ‘had_limiting_covid_symptoms’ had a highly influential role in the occurrence of long COVID symptoms. This makes sense conceptually, but not to a point of 99.9% accuracy. This model seems overfit.</p>
+<div id="1bb3e9b3-ce69-4e1c-a7d1-77be24cf7b03" class="cell" data-execution_count="31">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># feature importance for rf</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>viz_fi <span class="op">=</span> pd.DataFrame({<span class="st">'Features'</span>: X_train.columns, <span class="st">'Importance'</span>:</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>                         rf.feature_importances_})</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>viz_fi.style.hide()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="31">
+<style type="text/css">
+</style>
+
+<table id="T_826bc" class="caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th id="T_826bc_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">Features</th>
+<th id="T_826bc_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">Importance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td id="T_826bc_row0_col0" class="data row0 col0">heart_attack</td>
+<td id="T_826bc_row0_col1" class="data row0 col1">0.002362</td>
+</tr>
+<tr class="even">
+<td id="T_826bc_row1_col0" class="data row1 col0">coronary_heart_disease</td>
+<td id="T_826bc_row1_col1" class="data row1 col1">0.002386</td>
+</tr>
+<tr class="odd">
+<td id="T_826bc_row2_col0" class="data row2 col0">stroke</td>
+<td id="T_826bc_row2_col1" class="data row2 col1">0.002128</td>
+</tr>
+<tr class="even">
+<td id="T_826bc_row3_col0" class="data row3 col0">asthma</td>
+<td id="T_826bc_row3_col1" class="data row3 col1">0.005741</td>
+</tr>
+<tr class="odd">
+<td id="T_826bc_row4_col0" class="data row4 col0">skin_cancer</td>
+<td id="T_826bc_row4_col1" class="data row4 col1">0.002320</td>
+</tr>
+<tr class="even">
+<td id="T_826bc_row5_col0" class="data row5 col0">melanoma_or_other</td>
+<td id="T_826bc_row5_col1" class="data row5 col1">0.003233</td>
+</tr>
+<tr class="odd">
+<td id="T_826bc_row6_col0" class="data row6 col0">copd</td>
+<td id="T_826bc_row6_col1" class="data row6 col1">0.004777</td>
+</tr>
+<tr class="even">
+<td id="T_826bc_row7_col0" class="data row7 col0">depression</td>
+<td id="T_826bc_row7_col1" class="data row7 col1">0.008298</td>
+</tr>
+<tr class="odd">
+<td id="T_826bc_row8_col0" class="data row8 col0">kidney_disease</td>
+<td id="T_826bc_row8_col1" class="data row8 col1">0.002421</td>
+</tr>
+<tr class="even">
+<td id="T_826bc_row9_col0" class="data row9 col0">arthiritis</td>
+<td id="T_826bc_row9_col1" class="data row9 col1">0.005258</td>
+</tr>
+<tr class="odd">
+<td id="T_826bc_row10_col0" class="data row10 col0">veteran_status</td>
+<td id="T_826bc_row10_col1" class="data row10 col1">0.002741</td>
+</tr>
+<tr class="even">
+<td id="T_826bc_row11_col0" class="data row11 col0">children</td>
+<td id="T_826bc_row11_col1" class="data row11 col1">0.009062</td>
+</tr>
+<tr class="odd">
+<td id="T_826bc_row12_col0" class="data row12 col0">pregnant</td>
+<td id="T_826bc_row12_col1" class="data row12 col1">0.001991</td>
+</tr>
+<tr class="even">
+<td id="T_826bc_row13_col0" class="data row13 col0">deaf</td>
+<td id="T_826bc_row13_col1" class="data row13 col1">0.002988</td>
+</tr>
+<tr class="odd">
+<td id="T_826bc_row14_col0" class="data row14 col0">covid_vacc_status</td>
+<td id="T_826bc_row14_col1" class="data row14 col1">0.002633</td>
+</tr>
+<tr class="even">
+<td id="T_826bc_row15_col0" class="data row15 col0">diabetic</td>
+<td id="T_826bc_row15_col1" class="data row15 col1">0.003435</td>
+</tr>
+<tr class="odd">
+<td id="T_826bc_row16_col0" class="data row16 col0">college_or_more</td>
+<td id="T_826bc_row16_col1" class="data row16 col1">0.004450</td>
+</tr>
+<tr class="even">
+<td id="T_826bc_row17_col0" class="data row17 col0">income_over_50k</td>
+<td id="T_826bc_row17_col1" class="data row17 col1">0.003714</td>
+</tr>
+<tr class="odd">
+<td id="T_826bc_row18_col0" class="data row18 col0">currently_employed</td>
+<td id="T_826bc_row18_col1" class="data row18 col1">0.004183</td>
+</tr>
+<tr class="even">
+<td id="T_826bc_row19_col0" class="data row19 col0">is_married</td>
+<td id="T_826bc_row19_col1" class="data row19 col1">0.004026</td>
+</tr>
+<tr class="odd">
+<td id="T_826bc_row20_col0" class="data row20 col0">owns_home</td>
+<td id="T_826bc_row20_col1" class="data row20 col1">0.004198</td>
+</tr>
+<tr class="even">
+<td id="T_826bc_row21_col0" class="data row21 col0">covid_pos</td>
+<td id="T_826bc_row21_col1" class="data row21 col1">0.000000</td>
+</tr>
+<tr class="odd">
+<td id="T_826bc_row22_col0" class="data row22 col0">had_limiting_covid_symptoms</td>
+<td id="T_826bc_row22_col1" class="data row22 col1">0.916049</td>
+</tr>
+<tr class="even">
+<td id="T_826bc_row23_col0" class="data row23 col0">two_or_more_vaccs</td>
+<td id="T_826bc_row23_col1" class="data row23 col1">0.001605</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The bar plot below confirms the ridiculously overpowering role that ‘had_limitng_covid_symptoms’ has in this model, maybe further indicating that this model is overfit.</p>
+<div id="950aab55-1db4-4cfa-a9b4-cd1ab98398d0" class="cell" data-execution_count="33">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># feature importance bar plot for rf</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">14</span>))</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>sns.barplot(viz_fi, x <span class="op">=</span> <span class="st">'Importance'</span>, y <span class="op">=</span> <span class="st">'Features'</span>, ax<span class="op">=</span>ax)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="755_final_proj_rf_files/figure-html/cell-14-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="random-forest-model-excluding-primary_covid_symptom" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Random Forest Model Excluding ‘primary_covid_symptom’</h1>
+<p>Below another random forest model is run, this time excluding the most important feature, ‘had_limiting_covid_symptoms’. This model has 77% accuracy, which seems more reliable than the previous 99.9%.</p>
+<div id="c1e18532-2bb5-4495-a799-209092e8316a" class="cell" data-execution_count="28">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># establish X &amp; y, dropping 'had_limiting_covid_symptoms'</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>X_2 <span class="op">=</span> df.drop(columns<span class="op">=</span>[<span class="st">'prolonged_covid_symptoms'</span>, <span class="st">'had_limiting_covid_symptoms'</span>])</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>y_2 <span class="op">=</span> df[<span class="st">'prolonged_covid_symptoms'</span>]</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co"># scale numeric column</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>scaler <span class="op">=</span> StandardScaler()</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>X_2[<span class="st">'children'</span>] <span class="op">=</span> scaler.fit_transform(X_2[[<span class="st">'children'</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div id="21c14cd1-2ab1-43c9-b0e0-19c463b04e2d" class="cell" data-execution_count="30">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># train-test split</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>X_2_train, X_2_test, y_2_train, y_2_test <span class="op">=</span> train_test_split(</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>X_2, y_2, test_size<span class="op">=</span><span class="fl">0.33</span>, random_state<span class="op">=</span><span class="dv">42</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="co"># fit rf_2 model</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>rf_2 <span class="op">=</span> RandomForestClassifier(random_state<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>rf_2.fit(X_2_train, y_2_train)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="30">
+<style>#sk-container-id-1 {
+  /* Definition of color scheme common for light and dark mode */
+  --sklearn-color-text: black;
+  --sklearn-color-line: gray;
+  /* Definition of color scheme for unfitted estimators */
+  --sklearn-color-unfitted-level-0: #fff5e6;
+  --sklearn-color-unfitted-level-1: #f6e4d2;
+  --sklearn-color-unfitted-level-2: #ffe0b3;
+  --sklearn-color-unfitted-level-3: chocolate;
+  /* Definition of color scheme for fitted estimators */
+  --sklearn-color-fitted-level-0: #f0f8ff;
+  --sklearn-color-fitted-level-1: #d4ebff;
+  --sklearn-color-fitted-level-2: #b3dbfd;
+  --sklearn-color-fitted-level-3: cornflowerblue;
+
+  /* Specific color for light theme */
+  --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
+  --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, white)));
+  --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
+  --sklearn-color-icon: #696969;
+
+  @media (prefers-color-scheme: dark) {
+    /* Redefinition of color scheme for dark theme */
+    --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
+    --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, #111)));
+    --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
+    --sklearn-color-icon: #878787;
+  }
+}
+
+#sk-container-id-1 {
+  color: var(--sklearn-color-text);
+}
+
+#sk-container-id-1 pre {
+  padding: 0;
+}
+
+#sk-container-id-1 input.sk-hidden--visually {
+  border: 0;
+  clip: rect(1px 1px 1px 1px);
+  clip: rect(1px, 1px, 1px, 1px);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+}
+
+#sk-container-id-1 div.sk-dashed-wrapped {
+  border: 1px dashed var(--sklearn-color-line);
+  margin: 0 0.4em 0.5em 0.4em;
+  box-sizing: border-box;
+  padding-bottom: 0.4em;
+  background-color: var(--sklearn-color-background);
+}
+
+#sk-container-id-1 div.sk-container {
+  /* jupyter's `normalize.less` sets `[hidden] { display: none; }`
+     but bootstrap.min.css set `[hidden] { display: none !important; }`
+     so we also need the `!important` here to be able to override the
+     default hidden behavior on the sphinx rendered scikit-learn.org.
+     See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
+  display: inline-block !important;
+  position: relative;
+}
+
+#sk-container-id-1 div.sk-text-repr-fallback {
+  display: none;
+}
+
+div.sk-parallel-item,
+div.sk-serial,
+div.sk-item {
+  /* draw centered vertical line to link estimators */
+  background-image: linear-gradient(var(--sklearn-color-text-on-default-background), var(--sklearn-color-text-on-default-background));
+  background-size: 2px 100%;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+/* Parallel-specific style estimator block */
+
+#sk-container-id-1 div.sk-parallel-item::after {
+  content: "";
+  width: 100%;
+  border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
+  flex-grow: 1;
+}
+
+#sk-container-id-1 div.sk-parallel {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  background-color: var(--sklearn-color-background);
+  position: relative;
+}
+
+#sk-container-id-1 div.sk-parallel-item {
+  display: flex;
+  flex-direction: column;
+}
+
+#sk-container-id-1 div.sk-parallel-item:first-child::after {
+  align-self: flex-end;
+  width: 50%;
+}
+
+#sk-container-id-1 div.sk-parallel-item:last-child::after {
+  align-self: flex-start;
+  width: 50%;
+}
+
+#sk-container-id-1 div.sk-parallel-item:only-child::after {
+  width: 0;
+}
+
+/* Serial-specific style estimator block */
+
+#sk-container-id-1 div.sk-serial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--sklearn-color-background);
+  padding-right: 1em;
+  padding-left: 1em;
+}
+
+
+/* Toggleable style: style used for estimator/Pipeline/ColumnTransformer box that is
+clickable and can be expanded/collapsed.
+- Pipeline and ColumnTransformer use this feature and define the default style
+- Estimators will overwrite some part of the style using the `sk-estimator` class
+*/
+
+/* Pipeline and ColumnTransformer style (default) */
+
+#sk-container-id-1 div.sk-toggleable {
+  /* Default theme specific background. It is overwritten whether we have a
+  specific estimator or a Pipeline/ColumnTransformer */
+  background-color: var(--sklearn-color-background);
+}
+
+/* Toggleable label */
+#sk-container-id-1 label.sk-toggleable__label {
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  margin-bottom: 0;
+  padding: 0.5em;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+#sk-container-id-1 label.sk-toggleable__label-arrow:before {
+  /* Arrow on the left of the label */
+  content: "▸";
+  float: left;
+  margin-right: 0.25em;
+  color: var(--sklearn-color-icon);
+}
+
+#sk-container-id-1 label.sk-toggleable__label-arrow:hover:before {
+  color: var(--sklearn-color-text);
+}
+
+/* Toggleable content - dropdown */
+
+#sk-container-id-1 div.sk-toggleable__content {
+  max-height: 0;
+  max-width: 0;
+  overflow: hidden;
+  text-align: left;
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-0);
+}
+
+#sk-container-id-1 div.sk-toggleable__content.fitted {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-0);
+}
+
+#sk-container-id-1 div.sk-toggleable__content pre {
+  margin: 0.2em;
+  border-radius: 0.25em;
+  color: var(--sklearn-color-text);
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-0);
+}
+
+#sk-container-id-1 div.sk-toggleable__content.fitted pre {
+  /* unfitted */
+  background-color: var(--sklearn-color-fitted-level-0);
+}
+
+#sk-container-id-1 input.sk-toggleable__control:checked~div.sk-toggleable__content {
+  /* Expand drop-down */
+  max-height: 200px;
+  max-width: 100%;
+  overflow: auto;
+}
+
+#sk-container-id-1 input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {
+  content: "▾";
+}
+
+/* Pipeline/ColumnTransformer-specific style */
+
+#sk-container-id-1 div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+#sk-container-id-1 div.sk-label.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+/* Estimator-specific style */
+
+/* Colorize estimator box */
+#sk-container-id-1 div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+#sk-container-id-1 div.sk-estimator.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+#sk-container-id-1 div.sk-label label.sk-toggleable__label,
+#sk-container-id-1 div.sk-label label {
+  /* The background is the default theme color */
+  color: var(--sklearn-color-text-on-default-background);
+}
+
+/* On hover, darken the color of the background */
+#sk-container-id-1 div.sk-label:hover label.sk-toggleable__label {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+/* Label box, darken color on hover, fitted */
+#sk-container-id-1 div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+/* Estimator label */
+
+#sk-container-id-1 div.sk-label label {
+  font-family: monospace;
+  font-weight: bold;
+  display: inline-block;
+  line-height: 1.2em;
+}
+
+#sk-container-id-1 div.sk-label-container {
+  text-align: center;
+}
+
+/* Estimator-specific */
+#sk-container-id-1 div.sk-estimator {
+  font-family: monospace;
+  border: 1px dotted var(--sklearn-color-border-box);
+  border-radius: 0.25em;
+  box-sizing: border-box;
+  margin-bottom: 0.5em;
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-0);
+}
+
+#sk-container-id-1 div.sk-estimator.fitted {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-0);
+}
+
+/* on hover */
+#sk-container-id-1 div.sk-estimator:hover {
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+#sk-container-id-1 div.sk-estimator.fitted:hover {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+/* Specification for estimator info (e.g. "i" and "?") */
+
+/* Common style for "i" and "?" */
+
+.sk-estimator-doc-link,
+a:link.sk-estimator-doc-link,
+a:visited.sk-estimator-doc-link {
+  float: right;
+  font-size: smaller;
+  line-height: 1em;
+  font-family: monospace;
+  background-color: var(--sklearn-color-background);
+  border-radius: 1em;
+  height: 1em;
+  width: 1em;
+  text-decoration: none !important;
+  margin-left: 1ex;
+  /* unfitted */
+  border: var(--sklearn-color-unfitted-level-1) 1pt solid;
+  color: var(--sklearn-color-unfitted-level-1);
+}
+
+.sk-estimator-doc-link.fitted,
+a:link.sk-estimator-doc-link.fitted,
+a:visited.sk-estimator-doc-link.fitted {
+  /* fitted */
+  border: var(--sklearn-color-fitted-level-1) 1pt solid;
+  color: var(--sklearn-color-fitted-level-1);
+}
+
+/* On hover */
+div.sk-estimator:hover .sk-estimator-doc-link:hover,
+.sk-estimator-doc-link:hover,
+div.sk-label-container:hover .sk-estimator-doc-link:hover,
+.sk-estimator-doc-link:hover {
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-3);
+  color: var(--sklearn-color-background);
+  text-decoration: none;
+}
+
+div.sk-estimator.fitted:hover .sk-estimator-doc-link.fitted:hover,
+.sk-estimator-doc-link.fitted:hover,
+div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
+.sk-estimator-doc-link.fitted:hover {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-3);
+  color: var(--sklearn-color-background);
+  text-decoration: none;
+}
+
+/* Span, style for the box shown on hovering the info icon */
+.sk-estimator-doc-link span {
+  display: none;
+  z-index: 9999;
+  position: relative;
+  font-weight: normal;
+  right: .2ex;
+  padding: .5ex;
+  margin: .5ex;
+  width: min-content;
+  min-width: 20ex;
+  max-width: 50ex;
+  color: var(--sklearn-color-text);
+  box-shadow: 2pt 2pt 4pt #999;
+  /* unfitted */
+  background: var(--sklearn-color-unfitted-level-0);
+  border: .5pt solid var(--sklearn-color-unfitted-level-3);
+}
+
+.sk-estimator-doc-link.fitted span {
+  /* fitted */
+  background: var(--sklearn-color-fitted-level-0);
+  border: var(--sklearn-color-fitted-level-3);
+}
+
+.sk-estimator-doc-link:hover span {
+  display: block;
+}
+
+/* "?"-specific style due to the `<a>` HTML tag */
+
+#sk-container-id-1 a.estimator_doc_link {
+  float: right;
+  font-size: 1rem;
+  line-height: 1em;
+  font-family: monospace;
+  background-color: var(--sklearn-color-background);
+  border-radius: 1rem;
+  height: 1rem;
+  width: 1rem;
+  text-decoration: none;
+  /* unfitted */
+  color: var(--sklearn-color-unfitted-level-1);
+  border: var(--sklearn-color-unfitted-level-1) 1pt solid;
+}
+
+#sk-container-id-1 a.estimator_doc_link.fitted {
+  /* fitted */
+  border: var(--sklearn-color-fitted-level-1) 1pt solid;
+  color: var(--sklearn-color-fitted-level-1);
+}
+
+/* On hover */
+#sk-container-id-1 a.estimator_doc_link:hover {
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-3);
+  color: var(--sklearn-color-background);
+  text-decoration: none;
+}
+
+#sk-container-id-1 a.estimator_doc_link.fitted:hover {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-3);
+}
+</style><div id="sk-container-id-1" class="sk-top-container"><div class="sk-text-repr-fallback"><pre>RandomForestClassifier(random_state=42)</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br>On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class="sk-container" hidden=""><div class="sk-item"><div class="sk-estimator fitted sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-1" type="checkbox" checked=""><label for="sk-estimator-id-1" class="sk-toggleable__label fitted sk-toggleable__label-arrow fitted">&nbsp;&nbsp;RandomForestClassifier<a class="sk-estimator-doc-link fitted" rel="noreferrer" target="_blank" href="https://scikit-learn.org/1.5/modules/generated/sklearn.ensemble.RandomForestClassifier.html">?<span>Documentation for RandomForestClassifier</span></a><span class="sk-estimator-doc-link fitted">i<span>Fitted</span></span></label><div class="sk-toggleable__content fitted"><pre>RandomForestClassifier(random_state=42)</pre></div> </div></div></div></div>
+</div>
+</div>
+<div id="31e93477-786f-48b5-9920-6bb77b0409a4" class="cell" data-execution_count="31">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># run prediction</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>preds <span class="op">=</span> rf_2.predict(X_2_test)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co"># performance metrics</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Accuracy:"</span>, accuracy_score(y_2_test, preds))</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Classification Report:</span><span class="ch">\n</span><span class="st">"</span>, classification_report(y_2_test, preds))</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Confusion Matrix:</span><span class="ch">\n</span><span class="st">"</span>, confusion_matrix(y_2_test, preds))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Accuracy: 0.7685150257764366
+
+Classification Report:
+               precision    recall  f1-score   support
+
+           0       0.80      0.95      0.87     18795
+           1       0.34      0.09      0.15      5064
+
+    accuracy                           0.77     23859
+   macro avg       0.57      0.52      0.51     23859
+weighted avg       0.70      0.77      0.71     23859
+
+
+Confusion Matrix:
+ [[17855   940]
+ [ 4583   481]]</code></pre>
+</div>
+</div>
+<section id="feature-importance-for-rf_2" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="feature-importance-for-rf_2"><span class="header-section-number">3.1</span> Feature Importance for rf_2</h2>
+<p>Upon looking at the feature importances for this second random forest model it appears that ‘children’ is now the most important feature. Beyond that, it seems that a lot of the demographic variables have greater predictive value than the chorinc health condition columns. This is a very interesting finding that would be worth exploring further, as socioeconomic impacts of this pandemic have been of great interest.</p>
+<div id="1e3b9702-5377-4e00-9fdb-76ab120be70a" class="cell" data-execution_count="40">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># feature importance for rf_2</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>viz_fi_2 <span class="op">=</span> pd.DataFrame({<span class="st">'Features'</span>: X_2_train.columns, <span class="st">'Importance'</span>:</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>                         rf_2.feature_importances_})</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>viz_fi_2.style.hide()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="40">
+<style type="text/css">
+</style>
+
+<table id="T_31073" class="caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th id="T_31073_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">Features</th>
+<th id="T_31073_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">Importance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td id="T_31073_row0_col0" class="data row0 col0">heart_attack</td>
+<td id="T_31073_row0_col1" class="data row0 col1">0.026398</td>
+</tr>
+<tr class="even">
+<td id="T_31073_row1_col0" class="data row1 col0">coronary_heart_disease</td>
+<td id="T_31073_row1_col1" class="data row1 col1">0.027579</td>
+</tr>
+<tr class="odd">
+<td id="T_31073_row2_col0" class="data row2 col0">stroke</td>
+<td id="T_31073_row2_col1" class="data row2 col1">0.025833</td>
+</tr>
+<tr class="even">
+<td id="T_31073_row3_col0" class="data row3 col0">asthma</td>
+<td id="T_31073_row3_col1" class="data row3 col1">0.036787</td>
+</tr>
+<tr class="odd">
+<td id="T_31073_row4_col0" class="data row4 col0">skin_cancer</td>
+<td id="T_31073_row4_col1" class="data row4 col1">0.035112</td>
+</tr>
+<tr class="even">
+<td id="T_31073_row5_col0" class="data row5 col0">melanoma_or_other</td>
+<td id="T_31073_row5_col1" class="data row5 col1">0.046419</td>
+</tr>
+<tr class="odd">
+<td id="T_31073_row6_col0" class="data row6 col0">copd</td>
+<td id="T_31073_row6_col1" class="data row6 col1">0.033727</td>
+</tr>
+<tr class="even">
+<td id="T_31073_row7_col0" class="data row7 col0">depression</td>
+<td id="T_31073_row7_col1" class="data row7 col1">0.043841</td>
+</tr>
+<tr class="odd">
+<td id="T_31073_row8_col0" class="data row8 col0">kidney_disease</td>
+<td id="T_31073_row8_col1" class="data row8 col1">0.030535</td>
+</tr>
+<tr class="even">
+<td id="T_31073_row9_col0" class="data row9 col0">arthiritis</td>
+<td id="T_31073_row9_col1" class="data row9 col1">0.041218</td>
+</tr>
+<tr class="odd">
+<td id="T_31073_row10_col0" class="data row10 col0">veteran_status</td>
+<td id="T_31073_row10_col1" class="data row10 col1">0.039290</td>
+</tr>
+<tr class="even">
+<td id="T_31073_row11_col0" class="data row11 col0">children</td>
+<td id="T_31073_row11_col1" class="data row11 col1">0.163608</td>
+</tr>
+<tr class="odd">
+<td id="T_31073_row12_col0" class="data row12 col0">pregnant</td>
+<td id="T_31073_row12_col1" class="data row12 col1">0.014019</td>
+</tr>
+<tr class="even">
+<td id="T_31073_row13_col0" class="data row13 col0">deaf</td>
+<td id="T_31073_row13_col1" class="data row13 col1">0.041111</td>
+</tr>
+<tr class="odd">
+<td id="T_31073_row14_col0" class="data row14 col0">covid_vacc_status</td>
+<td id="T_31073_row14_col1" class="data row14 col1">0.033544</td>
+</tr>
+<tr class="even">
+<td id="T_31073_row15_col0" class="data row15 col0">diabetic</td>
+<td id="T_31073_row15_col1" class="data row15 col1">0.044611</td>
+</tr>
+<tr class="odd">
+<td id="T_31073_row16_col0" class="data row16 col0">college_or_more</td>
+<td id="T_31073_row16_col1" class="data row16 col1">0.064345</td>
+</tr>
+<tr class="even">
+<td id="T_31073_row17_col0" class="data row17 col0">income_over_50k</td>
+<td id="T_31073_row17_col1" class="data row17 col1">0.041026</td>
+</tr>
+<tr class="odd">
+<td id="T_31073_row18_col0" class="data row18 col0">currently_employed</td>
+<td id="T_31073_row18_col1" class="data row18 col1">0.063748</td>
+</tr>
+<tr class="even">
+<td id="T_31073_row19_col0" class="data row19 col0">is_married</td>
+<td id="T_31073_row19_col1" class="data row19 col1">0.062301</td>
+</tr>
+<tr class="odd">
+<td id="T_31073_row20_col0" class="data row20 col0">owns_home</td>
+<td id="T_31073_row20_col1" class="data row20 col1">0.061509</td>
+</tr>
+<tr class="even">
+<td id="T_31073_row21_col0" class="data row21 col0">covid_pos</td>
+<td id="T_31073_row21_col1" class="data row21 col1">0.000000</td>
+</tr>
+<tr class="odd">
+<td id="T_31073_row22_col0" class="data row22 col0">two_or_more_vaccs</td>
+<td id="T_31073_row22_col1" class="data row22 col1">0.023441</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="fe8da832-668d-4931-a04e-253f037a0dde" class="cell" data-execution_count="41">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># feature importance bar plot for rf_2</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">14</span>))</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>sns.barplot(viz_fi_2, x <span class="op">=</span> <span class="st">'Importance'</span>, y <span class="op">=</span> <span class="st">'Features'</span>, ax<span class="op">=</span>ax)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="755_final_proj_rf_files/figure-html/cell-19-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="random-forest-model-excluding-primary_covid_symptom-demographic-variables" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Random Forest Model Excluding ‘primary_covid_symptom’ &amp; demographic variables</h1>
+<p>Below a third random forest model is created to further isolate the predictive value of chronic health conditions in the occurrence of long COVID symptoms. Demographic variables are grouped together and dropped from teh dataset, along with ‘had_limiting_covid_symptoms’. This model performs with about 65% accuracy, which indicates that chronic health conditions may not be very predictive of long COVID symptoms. The feature importances for this model reveal some interesting results, showing that of the chronic health conditions explored in this study depression has the highest predictive values in the occurrence of long COIVD symptoms.</p>
+<div id="53189c4c-e163-4739-89ec-9613a1e71e46" class="cell" data-execution_count="34">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># group together demographic variables to prepare for dropping</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>demo_vars <span class="op">=</span> [<span class="st">'is_married'</span>, <span class="st">'college_or_more'</span>, <span class="st">'owns_home'</span>, <span class="st">'veteran_status'</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>             <span class="st">'currently_employed'</span>, <span class="st">'children'</span>, <span class="st">'income_over_50k'</span>, <span class="st">'pregnant'</span>, <span class="st">'deaf'</span>]</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="co"># establish X &amp; y, dropping 'had_limting_covid_symptoms' &amp; demo vars</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>X_3 <span class="op">=</span> df.drop(columns<span class="op">=</span>[<span class="st">'prolonged_covid_symptoms'</span>, <span class="st">'had_limiting_covid_symptoms'</span>] <span class="op">+</span> demo_vars)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>y_3 <span class="op">=</span> df[<span class="st">'prolonged_covid_symptoms'</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div id="d35235a7-ba02-4792-82a8-2ca10b877dec" class="cell" data-execution_count="36">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># train-test split</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>X_3_train, X_3_test, y_3_train, y_3_test <span class="op">=</span> train_test_split(</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    X_3, y_3, test_size<span class="op">=</span><span class="fl">0.33</span>, random_state<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="co"># fit rf_3 model</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>rf_3 <span class="op">=</span> RandomForestClassifier(class_weight<span class="op">=</span><span class="st">'balanced'</span>, random_state<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>rf_3.fit(X_3_train, y_3_train)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="36">
+<style>#sk-container-id-2 {
+  /* Definition of color scheme common for light and dark mode */
+  --sklearn-color-text: black;
+  --sklearn-color-line: gray;
+  /* Definition of color scheme for unfitted estimators */
+  --sklearn-color-unfitted-level-0: #fff5e6;
+  --sklearn-color-unfitted-level-1: #f6e4d2;
+  --sklearn-color-unfitted-level-2: #ffe0b3;
+  --sklearn-color-unfitted-level-3: chocolate;
+  /* Definition of color scheme for fitted estimators */
+  --sklearn-color-fitted-level-0: #f0f8ff;
+  --sklearn-color-fitted-level-1: #d4ebff;
+  --sklearn-color-fitted-level-2: #b3dbfd;
+  --sklearn-color-fitted-level-3: cornflowerblue;
+
+  /* Specific color for light theme */
+  --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
+  --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, white)));
+  --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, black)));
+  --sklearn-color-icon: #696969;
+
+  @media (prefers-color-scheme: dark) {
+    /* Redefinition of color scheme for dark theme */
+    --sklearn-color-text-on-default-background: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
+    --sklearn-color-background: var(--sg-background-color, var(--theme-background, var(--jp-layout-color0, #111)));
+    --sklearn-color-border-box: var(--sg-text-color, var(--theme-code-foreground, var(--jp-content-font-color1, white)));
+    --sklearn-color-icon: #878787;
+  }
+}
+
+#sk-container-id-2 {
+  color: var(--sklearn-color-text);
+}
+
+#sk-container-id-2 pre {
+  padding: 0;
+}
+
+#sk-container-id-2 input.sk-hidden--visually {
+  border: 0;
+  clip: rect(1px 1px 1px 1px);
+  clip: rect(1px, 1px, 1px, 1px);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+}
+
+#sk-container-id-2 div.sk-dashed-wrapped {
+  border: 1px dashed var(--sklearn-color-line);
+  margin: 0 0.4em 0.5em 0.4em;
+  box-sizing: border-box;
+  padding-bottom: 0.4em;
+  background-color: var(--sklearn-color-background);
+}
+
+#sk-container-id-2 div.sk-container {
+  /* jupyter's `normalize.less` sets `[hidden] { display: none; }`
+     but bootstrap.min.css set `[hidden] { display: none !important; }`
+     so we also need the `!important` here to be able to override the
+     default hidden behavior on the sphinx rendered scikit-learn.org.
+     See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
+  display: inline-block !important;
+  position: relative;
+}
+
+#sk-container-id-2 div.sk-text-repr-fallback {
+  display: none;
+}
+
+div.sk-parallel-item,
+div.sk-serial,
+div.sk-item {
+  /* draw centered vertical line to link estimators */
+  background-image: linear-gradient(var(--sklearn-color-text-on-default-background), var(--sklearn-color-text-on-default-background));
+  background-size: 2px 100%;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+/* Parallel-specific style estimator block */
+
+#sk-container-id-2 div.sk-parallel-item::after {
+  content: "";
+  width: 100%;
+  border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
+  flex-grow: 1;
+}
+
+#sk-container-id-2 div.sk-parallel {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  background-color: var(--sklearn-color-background);
+  position: relative;
+}
+
+#sk-container-id-2 div.sk-parallel-item {
+  display: flex;
+  flex-direction: column;
+}
+
+#sk-container-id-2 div.sk-parallel-item:first-child::after {
+  align-self: flex-end;
+  width: 50%;
+}
+
+#sk-container-id-2 div.sk-parallel-item:last-child::after {
+  align-self: flex-start;
+  width: 50%;
+}
+
+#sk-container-id-2 div.sk-parallel-item:only-child::after {
+  width: 0;
+}
+
+/* Serial-specific style estimator block */
+
+#sk-container-id-2 div.sk-serial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--sklearn-color-background);
+  padding-right: 1em;
+  padding-left: 1em;
+}
+
+
+/* Toggleable style: style used for estimator/Pipeline/ColumnTransformer box that is
+clickable and can be expanded/collapsed.
+- Pipeline and ColumnTransformer use this feature and define the default style
+- Estimators will overwrite some part of the style using the `sk-estimator` class
+*/
+
+/* Pipeline and ColumnTransformer style (default) */
+
+#sk-container-id-2 div.sk-toggleable {
+  /* Default theme specific background. It is overwritten whether we have a
+  specific estimator or a Pipeline/ColumnTransformer */
+  background-color: var(--sklearn-color-background);
+}
+
+/* Toggleable label */
+#sk-container-id-2 label.sk-toggleable__label {
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  margin-bottom: 0;
+  padding: 0.5em;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+#sk-container-id-2 label.sk-toggleable__label-arrow:before {
+  /* Arrow on the left of the label */
+  content: "▸";
+  float: left;
+  margin-right: 0.25em;
+  color: var(--sklearn-color-icon);
+}
+
+#sk-container-id-2 label.sk-toggleable__label-arrow:hover:before {
+  color: var(--sklearn-color-text);
+}
+
+/* Toggleable content - dropdown */
+
+#sk-container-id-2 div.sk-toggleable__content {
+  max-height: 0;
+  max-width: 0;
+  overflow: hidden;
+  text-align: left;
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-0);
+}
+
+#sk-container-id-2 div.sk-toggleable__content.fitted {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-0);
+}
+
+#sk-container-id-2 div.sk-toggleable__content pre {
+  margin: 0.2em;
+  border-radius: 0.25em;
+  color: var(--sklearn-color-text);
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-0);
+}
+
+#sk-container-id-2 div.sk-toggleable__content.fitted pre {
+  /* unfitted */
+  background-color: var(--sklearn-color-fitted-level-0);
+}
+
+#sk-container-id-2 input.sk-toggleable__control:checked~div.sk-toggleable__content {
+  /* Expand drop-down */
+  max-height: 200px;
+  max-width: 100%;
+  overflow: auto;
+}
+
+#sk-container-id-2 input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {
+  content: "▾";
+}
+
+/* Pipeline/ColumnTransformer-specific style */
+
+#sk-container-id-2 div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+#sk-container-id-2 div.sk-label.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+/* Estimator-specific style */
+
+/* Colorize estimator box */
+#sk-container-id-2 div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+#sk-container-id-2 div.sk-estimator.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+#sk-container-id-2 div.sk-label label.sk-toggleable__label,
+#sk-container-id-2 div.sk-label label {
+  /* The background is the default theme color */
+  color: var(--sklearn-color-text-on-default-background);
+}
+
+/* On hover, darken the color of the background */
+#sk-container-id-2 div.sk-label:hover label.sk-toggleable__label {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+/* Label box, darken color on hover, fitted */
+#sk-container-id-2 div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+/* Estimator label */
+
+#sk-container-id-2 div.sk-label label {
+  font-family: monospace;
+  font-weight: bold;
+  display: inline-block;
+  line-height: 1.2em;
+}
+
+#sk-container-id-2 div.sk-label-container {
+  text-align: center;
+}
+
+/* Estimator-specific */
+#sk-container-id-2 div.sk-estimator {
+  font-family: monospace;
+  border: 1px dotted var(--sklearn-color-border-box);
+  border-radius: 0.25em;
+  box-sizing: border-box;
+  margin-bottom: 0.5em;
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-0);
+}
+
+#sk-container-id-2 div.sk-estimator.fitted {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-0);
+}
+
+/* on hover */
+#sk-container-id-2 div.sk-estimator:hover {
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+
+#sk-container-id-2 div.sk-estimator.fitted:hover {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
+/* Specification for estimator info (e.g. "i" and "?") */
+
+/* Common style for "i" and "?" */
+
+.sk-estimator-doc-link,
+a:link.sk-estimator-doc-link,
+a:visited.sk-estimator-doc-link {
+  float: right;
+  font-size: smaller;
+  line-height: 1em;
+  font-family: monospace;
+  background-color: var(--sklearn-color-background);
+  border-radius: 1em;
+  height: 1em;
+  width: 1em;
+  text-decoration: none !important;
+  margin-left: 1ex;
+  /* unfitted */
+  border: var(--sklearn-color-unfitted-level-1) 1pt solid;
+  color: var(--sklearn-color-unfitted-level-1);
+}
+
+.sk-estimator-doc-link.fitted,
+a:link.sk-estimator-doc-link.fitted,
+a:visited.sk-estimator-doc-link.fitted {
+  /* fitted */
+  border: var(--sklearn-color-fitted-level-1) 1pt solid;
+  color: var(--sklearn-color-fitted-level-1);
+}
+
+/* On hover */
+div.sk-estimator:hover .sk-estimator-doc-link:hover,
+.sk-estimator-doc-link:hover,
+div.sk-label-container:hover .sk-estimator-doc-link:hover,
+.sk-estimator-doc-link:hover {
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-3);
+  color: var(--sklearn-color-background);
+  text-decoration: none;
+}
+
+div.sk-estimator.fitted:hover .sk-estimator-doc-link.fitted:hover,
+.sk-estimator-doc-link.fitted:hover,
+div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
+.sk-estimator-doc-link.fitted:hover {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-3);
+  color: var(--sklearn-color-background);
+  text-decoration: none;
+}
+
+/* Span, style for the box shown on hovering the info icon */
+.sk-estimator-doc-link span {
+  display: none;
+  z-index: 9999;
+  position: relative;
+  font-weight: normal;
+  right: .2ex;
+  padding: .5ex;
+  margin: .5ex;
+  width: min-content;
+  min-width: 20ex;
+  max-width: 50ex;
+  color: var(--sklearn-color-text);
+  box-shadow: 2pt 2pt 4pt #999;
+  /* unfitted */
+  background: var(--sklearn-color-unfitted-level-0);
+  border: .5pt solid var(--sklearn-color-unfitted-level-3);
+}
+
+.sk-estimator-doc-link.fitted span {
+  /* fitted */
+  background: var(--sklearn-color-fitted-level-0);
+  border: var(--sklearn-color-fitted-level-3);
+}
+
+.sk-estimator-doc-link:hover span {
+  display: block;
+}
+
+/* "?"-specific style due to the `<a>` HTML tag */
+
+#sk-container-id-2 a.estimator_doc_link {
+  float: right;
+  font-size: 1rem;
+  line-height: 1em;
+  font-family: monospace;
+  background-color: var(--sklearn-color-background);
+  border-radius: 1rem;
+  height: 1rem;
+  width: 1rem;
+  text-decoration: none;
+  /* unfitted */
+  color: var(--sklearn-color-unfitted-level-1);
+  border: var(--sklearn-color-unfitted-level-1) 1pt solid;
+}
+
+#sk-container-id-2 a.estimator_doc_link.fitted {
+  /* fitted */
+  border: var(--sklearn-color-fitted-level-1) 1pt solid;
+  color: var(--sklearn-color-fitted-level-1);
+}
+
+/* On hover */
+#sk-container-id-2 a.estimator_doc_link:hover {
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-3);
+  color: var(--sklearn-color-background);
+  text-decoration: none;
+}
+
+#sk-container-id-2 a.estimator_doc_link.fitted:hover {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-3);
+}
+</style><div id="sk-container-id-2" class="sk-top-container"><div class="sk-text-repr-fallback"><pre>RandomForestClassifier(class_weight='balanced', random_state=42)</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br>On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class="sk-container" hidden=""><div class="sk-item"><div class="sk-estimator fitted sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="sk-estimator-id-2" type="checkbox" checked=""><label for="sk-estimator-id-2" class="sk-toggleable__label fitted sk-toggleable__label-arrow fitted">&nbsp;&nbsp;RandomForestClassifier<a class="sk-estimator-doc-link fitted" rel="noreferrer" target="_blank" href="https://scikit-learn.org/1.5/modules/generated/sklearn.ensemble.RandomForestClassifier.html">?<span>Documentation for RandomForestClassifier</span></a><span class="sk-estimator-doc-link fitted">i<span>Fitted</span></span></label><div class="sk-toggleable__content fitted"><pre>RandomForestClassifier(class_weight='balanced', random_state=42)</pre></div> </div></div></div></div>
+</div>
+</div>
+<div id="a24d7840-0e5a-4595-86e7-1cdaa858b8e7" class="cell" data-execution_count="38">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># run prediction</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>preds <span class="op">=</span> rf_3.predict(X_3_test)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="co"># performance metrics</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Accuracy:"</span>, accuracy_score(y_3_test, preds))</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Classification Report:</span><span class="ch">\n</span><span class="st">"</span>, classification_report(y_3_test, preds))</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">Confusion Matrix:</span><span class="ch">\n</span><span class="st">"</span>, confusion_matrix(y_3_test, preds))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Accuracy: 0.6480154239490339
+
+Classification Report:
+               precision    recall  f1-score   support
+
+           0       0.82      0.71      0.76     18795
+           1       0.28      0.43      0.34      5064
+
+    accuracy                           0.65     23859
+   macro avg       0.55      0.57      0.55     23859
+weighted avg       0.71      0.65      0.67     23859
+
+
+Confusion Matrix:
+ [[13268  5527]
+ [ 2871  2193]]</code></pre>
+</div>
+</div>
+<section id="feature-importance-for-rf_3" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="feature-importance-for-rf_3"><span class="header-section-number">4.1</span> Feature Importance for rf_3</h2>
+<div id="189df554-a139-4eb8-bde7-adaef34409c7" class="cell" data-execution_count="48">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># feature importance for rf_3</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>viz_fi_3 <span class="op">=</span> pd.DataFrame({<span class="st">'Features'</span>: X_3_train.columns, <span class="st">'Importance'</span>:</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>                         rf_3.feature_importances_})</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>viz_fi_3.style.hide()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="48">
+<style type="text/css">
+</style>
+
+<table id="T_67a5d" class="caption-top table table-sm table-striped small" data-quarto-postprocess="true">
+<thead>
+<tr class="header">
+<th id="T_67a5d_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">Features</th>
+<th id="T_67a5d_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">Importance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td id="T_67a5d_row0_col0" class="data row0 col0">heart_attack</td>
+<td id="T_67a5d_row0_col1" class="data row0 col1">0.053187</td>
+</tr>
+<tr class="even">
+<td id="T_67a5d_row1_col0" class="data row1 col0">coronary_heart_disease</td>
+<td id="T_67a5d_row1_col1" class="data row1 col1">0.059658</td>
+</tr>
+<tr class="odd">
+<td id="T_67a5d_row2_col0" class="data row2 col0">stroke</td>
+<td id="T_67a5d_row2_col1" class="data row2 col1">0.050881</td>
+</tr>
+<tr class="even">
+<td id="T_67a5d_row3_col0" class="data row3 col0">asthma</td>
+<td id="T_67a5d_row3_col1" class="data row3 col1">0.117272</td>
+</tr>
+<tr class="odd">
+<td id="T_67a5d_row4_col0" class="data row4 col0">skin_cancer</td>
+<td id="T_67a5d_row4_col1" class="data row4 col1">0.059961</td>
+</tr>
+<tr class="even">
+<td id="T_67a5d_row5_col0" class="data row5 col0">melanoma_or_other</td>
+<td id="T_67a5d_row5_col1" class="data row5 col1">0.066043</td>
+</tr>
+<tr class="odd">
+<td id="T_67a5d_row6_col0" class="data row6 col0">copd</td>
+<td id="T_67a5d_row6_col1" class="data row6 col1">0.091084</td>
+</tr>
+<tr class="even">
+<td id="T_67a5d_row7_col0" class="data row7 col0">depression</td>
+<td id="T_67a5d_row7_col1" class="data row7 col1">0.184135</td>
+</tr>
+<tr class="odd">
+<td id="T_67a5d_row8_col0" class="data row8 col0">kidney_disease</td>
+<td id="T_67a5d_row8_col1" class="data row8 col1">0.056640</td>
+</tr>
+<tr class="even">
+<td id="T_67a5d_row9_col0" class="data row9 col0">arthiritis</td>
+<td id="T_67a5d_row9_col1" class="data row9 col1">0.111152</td>
+</tr>
+<tr class="odd">
+<td id="T_67a5d_row10_col0" class="data row10 col0">covid_vacc_status</td>
+<td id="T_67a5d_row10_col1" class="data row10 col1">0.053280</td>
+</tr>
+<tr class="even">
+<td id="T_67a5d_row11_col0" class="data row11 col0">diabetic</td>
+<td id="T_67a5d_row11_col1" class="data row11 col1">0.058644</td>
+</tr>
+<tr class="odd">
+<td id="T_67a5d_row12_col0" class="data row12 col0">covid_pos</td>
+<td id="T_67a5d_row12_col1" class="data row12 col1">0.000000</td>
+</tr>
+<tr class="even">
+<td id="T_67a5d_row13_col0" class="data row13 col0">two_or_more_vaccs</td>
+<td id="T_67a5d_row13_col1" class="data row13 col1">0.038064</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="6da66056-8f1a-4f7c-bdc5-34b77dba0e5b" class="cell" data-execution_count="49">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># feature importance bar plot for rf_3</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>sns.barplot(viz_fi_3, x <span class="op">=</span> <span class="st">'Importance'</span>, y <span class="op">=</span> <span class="st">'Features'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="755_final_proj_rf_files/figure-html/cell-24-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="test-predictions" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Test Predictions</h1>
+<p>Below a held-out test dataset is read in and sampled to check that it was read in correctly. The size is checked, showing the same number of variables as the test set (25), and about 1/3 of the observations as the training set (24,100). The column names are checked, showing they are the same as the training set. It is necessary for these column names to be identical in order for the predictions to run.</p>
+<div id="94f32c78-af61-4fc3-8a10-602ecde04eec" class="cell" data-execution_count="40">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># read in &amp; sample test data</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>test_df <span class="op">=</span> pd.read_csv(<span class="st">'data_test.csv'</span>)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>test_df.sample(<span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="40">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">heart_attack</th>
+<th data-quarto-table-cell-role="th">coronary_heart_disease</th>
+<th data-quarto-table-cell-role="th">stroke</th>
+<th data-quarto-table-cell-role="th">asthma</th>
+<th data-quarto-table-cell-role="th">skin_cancer</th>
+<th data-quarto-table-cell-role="th">melanoma_or_other</th>
+<th data-quarto-table-cell-role="th">copd</th>
+<th data-quarto-table-cell-role="th">depression</th>
+<th data-quarto-table-cell-role="th">kidney_disease</th>
+<th data-quarto-table-cell-role="th">arthiritis</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">prolonged_covid_symptoms</th>
+<th data-quarto-table-cell-role="th">diabetic</th>
+<th data-quarto-table-cell-role="th">college_or_more</th>
+<th data-quarto-table-cell-role="th">income_over_50k</th>
+<th data-quarto-table-cell-role="th">currently_employed</th>
+<th data-quarto-table-cell-role="th">is_married</th>
+<th data-quarto-table-cell-role="th">owns_home</th>
+<th data-quarto-table-cell-role="th">covid_pos</th>
+<th data-quarto-table-cell-role="th">had_limiting_covid_symptoms</th>
+<th data-quarto-table-cell-role="th">two_or_more_vaccs</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">17979</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0.0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>...</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1.0</td>
+<td>0.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">19344</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0.0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>...</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>NaN</td>
+<td>1.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">1810</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0.0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>...</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>1.0</td>
+<td>NaN</td>
+</tr>
+</tbody>
+</table>
+
+<p>3 rows × 25 columns</p>
+</div>
+</div>
+</div>
+<div id="f787a417-db6e-4014-9779-65b812c23ff0" class="cell" data-execution_count="55">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># assess size of dataset</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>test_df.shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="55">
+<pre><code>(24100, 25)</code></pre>
+</div>
+</div>
+<div id="6d9b2149-483c-4fd5-89b5-ca30e13e9951" class="cell" data-execution_count="57">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># identical columns as training set</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>test_df.columns</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="57">
+<pre><code>Index(['heart_attack', 'coronary_heart_disease', 'stroke', 'asthma',
+       'skin_cancer', 'melanoma_or_other', 'copd', 'depression',
+       'kidney_disease', 'arthiritis', 'veteran_status', 'children',
+       'pregnant', 'deaf', 'covid_vacc_status', 'prolonged_covid_symptoms',
+       'diabetic', 'college_or_more', 'income_over_50k', 'currently_employed',
+       'is_married', 'owns_home', 'covid_pos', 'had_limiting_covid_symptoms',
+       'two_or_more_vaccs'],
+      dtype='object')</code></pre>
+</div>
+</div>
+<p>Test predictions are generated performance metircs are obtained. This model has a 76% accuracy in the held-out dataset, indicating this model is not overfit. The predictions are added in a new column to the original dataset and saved as a new .csv file.</p>
+<div id="304275ab-3681-4160-8967-d7ea5de29a6a" class="cell" data-execution_count="69">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define X and y for testing</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> test_df.drop(columns<span class="op">=</span>[<span class="st">'prolonged_covid_symptoms'</span>, <span class="st">'had_limiting_covid_symptoms'</span>])</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>y_test <span class="op">=</span> test_df[<span class="st">'prolonged_covid_symptoms'</span>]</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Make predictions</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>y_pred <span class="op">=</span> rf_2.predict(X_test)</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Evaluate</span></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Accuracy:"</span>, accuracy_score(y_test, y_pred))</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(classification_report(y_test, y_pred))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Accuracy: 0.7581327800829876
+              precision    recall  f1-score   support
+
+           0       0.79      0.93      0.86     18939
+           1       0.32      0.11      0.17      5161
+
+    accuracy                           0.76     24100
+   macro avg       0.56      0.52      0.51     24100
+weighted avg       0.69      0.76      0.71     24100
+</code></pre>
+</div>
+</div>
+<div id="b779797b-8478-42d0-98f6-10236f0d47e2" class="cell" data-execution_count="71">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># add predictions to dataset</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>test_df[<span class="st">'predicted_prolonged_covid_symptoms'</span>] <span class="op">=</span> y_pred</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a><span class="co"># save as .csv</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>test_df.to_csv(<span class="st">"test_predictions.csv"</span>, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a><span class="co"># confirm file has saved</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Predictions saved to test_predictions.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Predictions saved to test_predictions.csv</code></pre>
+</div>
+</div>
+</section>
+<section id="conclusion" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Conclusion</h1>
+<p>In this study, a random forest classification model was developed to predict the likelihood of prolonged COVID-19 symptoms based on a set of binary predictors. When evaluated on the independent test set, the model achieved an accuracy of 76%, indicating that it was able to correctly classify the outcome in over 3/4 of cases. This level of performance suggests that the selected predictors contain meaningful information related to prolonged COVID-19 outcomes, although there remains room for improvement. Future work could focus, incorporating additional predictive features, optimzing model parameters, and exploring alternative algorithms to enhance predictive performance and better support clinical or public health decision-making.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+  const viewSource = window.document.getElementById('quarto-view-source') ||
+                     window.document.getElementById('quarto-code-tools-source');
+  if (viewSource) {
+    const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+    viewSource.addEventListener("click", function(e) {
+      if (sourceUrl) {
+        // rstudio viewer pane
+        if (/\bcapabilities=\b/.test(window.location)) {
+          window.open(sourceUrl);
+        } else {
+          window.location.href = sourceUrl;
+        }
+      } else {
+        const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+        modal.show();
+      }
+      return false;
+    });
+  }
+  function toggleCodeHandler(show) {
+    return function(e) {
+      const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+      for (let i=0; i<detailsSrc.length; i++) {
+        const details = detailsSrc[i].parentElement;
+        if (show) {
+          details.open = true;
+        } else {
+          details.removeAttribute("open");
+        }
+      }
+      const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+      const fromCls = show ? "hidden" : "unhidden";
+      const toCls = show ? "unhidden" : "hidden";
+      for (let i=0; i<cellCodeDivs.length; i++) {
+        const codeDiv = cellCodeDivs[i];
+        if (codeDiv.classList.contains(fromCls)) {
+          codeDiv.classList.remove(fromCls);
+          codeDiv.classList.add(toCls);
+        } 
+      }
+      return false;
+    }
+  }
+  const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+  if (hideAllCode) {
+    hideAllCode.addEventListener("click", toggleCodeHandler(false));
+  }
+  const showAllCode = window.document.getElementById("quarto-show-all-code");
+  if (showAllCode) {
+    showAllCode.addEventListener("click", toggleCodeHandler(true));
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
