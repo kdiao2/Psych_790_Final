@@ -1,5 +1,5 @@
 # Psych 755: Final Project
-**Authors: Huda Ahmed, Kenneth Diao, Sadaf Nasir**
+**Authors:** Huda Ahmed, Kenneth Diao, Sadaf Nasir
 
 # Description
 
@@ -19,5 +19,5 @@ The goal of this project is to apply machine learning methods (random forest & l
 2. [Data Files](https://github.com/kdiao2/Psych_755_Final/tree/0945650f6ec4aa59687b9fe4689c542a7aafea6a/data)
 3. [Codebooks](https://github.com/kdiao2/Psych_755_Final/tree/0945650f6ec4aa59687b9fe4689c542a7aafea6a/codebooks)
 4. [Data Cleaning & EDA](https://github.com/kdiao2/Psych_755_Final/tree/0945650f6ec4aa59687b9fe4689c542a7aafea6a/cleaning_and_eda)
-5. [Random Forest ML]
-6. [Logistic Regresison ML]
+5. [Random Forest ML](https://github.com/kdiao2/Psych_755_Final/tree/f7f8fa639fe3924fb71bab6f90c01ee8509c1bdb/random_forest_model)
+6. [Logistic Regresison ML](https://github.com/kdiao2/Psych_755_Final/tree/f7f8fa639fe3924fb71bab6f90c01ee8509c1bdb/logistic_regression)
